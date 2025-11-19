@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Security Groups Explained</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 36px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        
+        /* Section Styles */
+        .section {
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Analogy Box */
+        .analogy-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .analogy-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .analogy-content {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        /* Visual Diagram */
+        .diagram {
+            background: #f8f9fa;
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+            position: relative;
+        }
+        .vpc-box {
+            border: 4px dashed #3498db;
+            padding: 40px;
+            border-radius: 20px;
+            background: rgba(52, 152, 219, 0.05);
+            position: relative;
+        }
+        .vpc-label {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #3498db;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .resource {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            position: relative;
+            border: 3px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .resource:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .resource-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .resource-name {
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .security-group {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .sg-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sg-rules {
+            font-size: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 8px;
+        }
+        
+        /* Traffic Flow */
+        .traffic-demo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .traffic-source {
+            flex: 1;
+            min-width: 200px;
+            background: #3498db;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .traffic-arrow {
+            font-size: 40px;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .traffic-sg {
+            flex: 1;
+            min-width: 250px;
+            background: #e74c3c;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .traffic-destination {
+            flex: 1;
+            min-width: 200px;
+            background: #27ae60;
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .allowed {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .denied {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        /* Rules Table */
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .rules-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+        .rules-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+        .rules-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .info-title {
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .info-content {
+            color: #1976d2;
+            line-height: 1.8;
+        }
+        
+        /* Warning Box */
+        .warning-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .warning-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .warning-content {
+            color: #856404;
+            line-height: 1.8;
+        }
+        
+        /* Comparison Grid */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .comparison-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border: 3px solid;
+        }
+        .comparison-card.allow {
+            border-color: #27ae60;
+        }
+        .comparison-card.deny {
+            border-color: #e74c3c;
+        }
+        .comparison-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Use Cases */
+        .use-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        .use-case {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .use-case-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .use-case-content {
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        
+        @media (max-width: 768px) {
+            .traffic-demo {
+                flex-direction: column;
+            }
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ AWS Security Groups Explained</h1>
+        <div class="subtitle">Virtual Firewalls for Your AWS Resources</div>
+        
+        <!-- Simple Explanation -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🎯</span>
+                What is a Security Group?
+            </div>
+            
+            <div class="analogy-box">
+                <div class="analogy-title">
+                    <span style="font-size: 32px;">🏰</span>
+                    Real-World Analogy: The Nightclub Bouncer
+                </div>
+                <div class="analogy-content">
+                    <strong>Imagine a Security Group as a bouncer at a nightclub door:</strong><br><br>
+                    
+                    🚪 <strong>The Bouncer (Security Group)</strong> stands at the entrance and checks everyone<br>
+                    📋 <strong>The Rules</strong> are the list: "Allow VIPs," "Allow people over 21," "No weapons"<br>
+                    👥 <strong>People (Traffic)</strong> try to enter or exit<br>
+                    ✅ <strong>Allowed In:</strong> People who match the rules get through<br>
+                    ❌ <strong>Denied:</strong> Everyone else is turned away<br><br>
+                    
+                    <strong>Key Point:</strong> The bouncer is STATEFUL - if you came in through the front door, you're automatically allowed to leave through it. You don't need a separate "exit rule"!
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-title">📚 Technical Definition</div>
+                <div class="info-content">
+                    A <strong>Security Group</strong> is a virtual firewall that controls inbound and outbound traffic to AWS resources (like EC2 instances, RDS databases, load balancers, etc.). It acts at the instance level, not the subnet level.<br><br>
+                    
+                    <strong>Key Characteristics:</strong><br>
+                    • <strong>Stateful:</strong> If you allow traffic IN, the response is automatically allowed OUT<br>
+                    • <strong>Allow rules only:</strong> You can only specify what to ALLOW (deny is implicit for everything else)<br>
+                    • <strong>Multiple resources:</strong> One security group can be attached to many resources<br>
+                    • <strong>Multiple security groups:</strong> One resource can have multiple security groups (rules are combined)
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visual Diagram -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🏗️</span>
+                Security Groups in Action
+            </div>
+            
+            <div class="diagram">
+                <div class="vpc-box">
+                    <div class="vpc-label">🌐 VPC (Virtual Private Cloud)</div>
+                    
+                    <div class="resource-grid">
+                        <!-- Web Server -->
+                        <div class="resource">
+                            <div class="resource-icon">🖥️</div>
+                            <div class="resource-name">EC2 Instance<br>(Web Server)</div>
+                            <div style="text-align: center; color: #7f8c8d; font-size: 13px;">10.0.1.50</div>
+                            
+                            <div class="security-group">
+                                <div class="sg-title">
+                                    🛡️ Security Group: "web-sg"
+                                </div>
+                                <div class="sg-rules">
+                                    <strong>INBOUND:</strong><br>
+                                    ✅ HTTP (80) from 0.0.0.0/0<br>
+                                    ✅ HTTPS (443) from 0.0.0.0/0<br>
+                                    ✅ SSH (22) from 203.0.113.0/24<br><br>
+                                    <strong>OUTBOUND:</strong><br>
+                                    ✅ All traffic (automatic)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Database -->
+                        <div class="resource">
+                            <div class="resource-icon">🗄️</div>
+                            <div class="resource-name">RDS Database<br>(MySQL)</div>
+                            <div style="text-align: center; color: #7f8c8d; font-size: 13px;">10.0.2.100</div>
+                            
+                            <div class="security-group">
+                                <div class="sg-title">
+                                    🛡️ Security Group: "db-sg"
+                                </div>
+                                <div class="sg-rules">
+                                    <strong>INBOUND:</strong><br>
+                                    ✅ MySQL (3306) from "web-sg"<br>
+                                    (Only from web servers!)<br><br>
+                                    <strong>OUTBOUND:</strong><br>
+                                    ✅ All traffic (automatic)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Load Balancer -->
+                        <div class="resource">
+                            <div class="resource-icon">⚖️</div>
+                            <div class="resource-name">Application<br>Load Balancer</div>
+                            <div style="text-align: center; color: #7f8c8d; font-size: 13px;">Public</div>
+                            
+                            <div class="security-group">
+                                <div class="sg-title">
+                                    🛡️ Security Group: "alb-sg"
+                                </div>
+                                <div class="sg-rules">
+                                    <strong>INBOUND:</strong><br>
+                                    ✅ HTTP (80) from 0.0.0.0/0<br>
+                                    ✅ HTTPS (443) from 0.0.0.0/0<br><br>
+                                    <strong>OUTBOUND:</strong><br>
+                                    ✅ HTTP (80) to "web-sg"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Traffic Flow -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🚦</span>
+                How Traffic is Evaluated
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #27ae60; margin-bottom: 15px;">✅ Example 1: ALLOWED Traffic</h3>
+                <div class="traffic-demo">
+                    <div class="traffic-source">
+                        👤 User Browser<br>
+                        <small>IP: 203.0.113.50</small>
+                    </div>
+                    <div class="traffic-arrow">→</div>
+                    <div class="traffic-sg">
+                        🛡️ Security Group Check<br>
+                        <div style="font-size: 14px; margin-top: 10px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px;">
+                            Request: HTTPS (443)<br>
+                            From: 203.0.113.50<br>
+                            <strong style="color: #27ae60;">✅ MATCHES RULE!</strong><br>
+                            (HTTPS from 0.0.0.0/0)
+                        </div>
+                    </div>
+                    <div class="traffic-arrow">→</div>
+                    <div class="traffic-destination">
+                        🖥️ Web Server<br>
+                        <small>Access Granted!</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 style="color: #e74c3c; margin-bottom: 15px;">❌ Example 2: DENIED Traffic</h3>
+                <div class="traffic-demo">
+                    <div class="traffic-source" style="background: #95a5a6;">
+                        👤 Unknown User<br>
+                        <small>IP: 198.51.100.25</small>
+                    </div>
+                    <div class="traffic-arrow">→</div>
+                    <div class="traffic-sg">
+                        🛡️ Security Group Check<br>
+                        <div style="font-size: 14px; margin-top: 10px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px;">
+                            Request: SSH (22)<br>
+                            From: 198.51.100.25<br>
+                            <strong style="color: #e74c3c;">❌ NO MATCH!</strong><br>
+                            (SSH only allowed from 203.0.113.0/24)
+                        </div>
+                    </div>
+                    <div class="traffic-arrow">✖</div>
+                    <div class="traffic-destination" style="background: #95a5a6;">
+                        🚫 Blocked<br>
+                        <small>Access Denied</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rules Structure -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">📋</span>
+                Security Group Rules Structure
+            </div>
+            
+            <table class="rules-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Protocol</th>
+                        <th>Port Range</th>
+                        <th>Source/Destination</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Inbound</strong></td>
+                        <td>HTTP</td>
+                        <td>80</td>
+                        <td>0.0.0.0/0 (anywhere)</td>
+                        <td>Allow web traffic from internet</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Inbound</strong></td>
+                        <td>HTTPS</td>
+                        <td>443</td>
+                        <td>0.0.0.0/0 (anywhere)</td>
+                        <td>Allow secure web traffic</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Inbound</strong></td>
+                        <td>SSH</td>
+                        <td>22</td>
+                        <td>203.0.113.0/24</td>
+                        <td>Allow SSH from office network only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Inbound</strong></td>
+                        <td>MySQL</td>
+                        <td>3306</td>
+                        <td>sg-1234abcd (web-sg)</td>
+                        <td>Allow database access from web servers</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Outbound</strong></td>
+                        <td>All</td>
+                        <td>All</td>
+                        <td>0.0.0.0/0</td>
+                        <td>Allow all outbound (default)</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="info-box">
+                <div class="info-title">💡 Understanding Sources</div>
+                <div class="info-content">
+                    <strong>You can specify sources in three ways:</strong><br><br>
+                    
+                    1️⃣ <strong>IP Address/CIDR:</strong> 203.0.113.50/32 (specific IP) or 10.0.0.0/16 (range)<br>
+                    2️⃣ <strong>Another Security Group:</strong> sg-1234abcd (allows traffic from resources with that SG)<br>
+                    3️⃣ <strong>Anywhere:</strong> 0.0.0.0/0 (the entire internet - use carefully!)
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stateful vs Stateless -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🔄</span>
+                Stateful Behavior (The Magic!)
+            </div>
+            
+            <div class="comparison">
+                <div class="comparison-card allow">
+                    <div class="comparison-title" style="color: #27ae60;">
+                        <span style="font-size: 28px;">✅</span>
+                        How Security Groups Work
+                    </div>
+                    <div style="line-height: 1.8;">
+                        <strong>STATEFUL = Remembers connections</strong><br><br>
+                        
+                        <strong>Scenario:</strong> User requests a web page<br><br>
+                        
+                        1️⃣ <strong>Inbound Request:</strong><br>
+                        User → Web Server (port 443)<br>
+                        ✅ Check inbound rule: HTTPS allowed ✓<br><br>
+                        
+                        2️⃣ <strong>Outbound Response:</strong><br>
+                        Web Server → User (port 443)<br>
+                        ✅ <strong>AUTOMATICALLY ALLOWED</strong><br>
+                        (No outbound rule needed!)<br><br>
+                        
+                        <strong>Why?</strong> Security Group remembers the connection was initiated and automatically allows the response.
+                    </div>
+                </div>
+                
+                <div class="comparison-card deny">
+                    <div class="comparison-title" style="color: #e74c3c;">
+                        <span style="font-size: 28px;">📊</span>
+                        Comparison: Network ACLs
+                    </div>
+                    <div style="line-height: 1.8;">
+                        <strong>STATELESS = No memory</strong><br><br>
+                        
+                        <strong>Same Scenario with NACLs:</strong><br><br>
+                        
+                        1️⃣ <strong>Inbound Request:</strong><br>
+                        User → Web Server (port 443)<br>
+                        ✅ Check inbound rule: HTTPS allowed ✓<br><br>
+                        
+                        2️⃣ <strong>Outbound Response:</strong><br>
+                        Web Server → User (port 443)<br>
+                        ❓ <strong>MUST CHECK OUTBOUND RULE</strong><br>
+                        Need explicit outbound rule!<br><br>
+                        
+                        <strong>Why?</strong> NACLs don't remember connections, so you need both inbound AND outbound rules.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Common Use Cases -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🎯</span>
+                Common Security Group Patterns
+            </div>
+            
+            <div class="use-cases">
+                <div class="use-case">
+                    <div class="use-case-title">
+                        <span style="font-size: 24px;">🌐</span>
+                        Public Web Server
+                    </div>
+                    <div class="use-case-content">
+                        <strong>Attached to:</strong> EC2 web server<br><br>
+                        <strong>Inbound Rules:</strong><br>
+                        • HTTP (80) from 0.0.0.0/0<br>
+                        • HTTPS (443) from 0.0.0.0/0<br>
+                        • SSH (22) from your IP only<br><br>
+                        <strong>Use Case:</strong> Public website accessible to everyone, but SSH restricted to admins
+                    </div>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-title">
+                        <span style="font-size: 24px;">🗄️</span>
+                        Database Server
+                    </div>
+                    <div class="use-case-content">
+                        <strong>Attached to:</strong> RDS instance<br><br>
+                        <strong>Inbound Rules:</strong><br>
+                        • MySQL (3306) from web-sg<br>
+                        • PostgreSQL (5432) from app-sg<br><br>
+                        <strong>Use Case:</strong> Database only accessible from specific application servers, not from internet
+                    </div>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-title">
+                        <span style="font-size: 24px;">⚖️</span>
+                        Load Balancer
+                    </div>
+                    <div class="use-case-content">
+                        <strong>Attached to:</strong> ALB/NLB<br><br>
+                        <strong>Inbound Rules:</strong><br>
+                        • HTTP (80) from 0.0.0.0/0<br>
+                        • HTTPS (443) from 0.0.0.0/0<br><br>
+                        <strong>Outbound Rules:</strong><br>
+                        • HTTP (80) to backend-sg<br><br>
+                        <strong>Use Case:</strong> Accept public traffic, forward to private backend servers
+                    </div>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-title">
+                        <span style="font-size: 24px;">🔒</span>
+                        Private Application
+                    </div>
+                    <div class="use-case-content">
+                        <strong>Attached to:</strong> EC2 in private subnet<br><br>
+                        <strong>Inbound Rules:</strong><br>
+                        • Custom (8080) from alb-sg<br>
+                        • SSH (22) from bastion-sg<br><br>
+                        <strong>Use Case:</strong> Application servers that only accept traffic from load balancer and bastion host
+                    </div>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-title">
+                        <span style="font-size: 24px;">🏢</span>
+                        Bastion Host
+                    </div>
+                    <div class="use-case-content">
+                        <strong>Attached to:</strong> EC2 jump server<br><br>
+                        <strong>Inbound Rules:</strong><br>
+                        • SSH (22) from office-ip/32<br><br>
+                        <strong>Outbound Rules:</strong><br>
+                        • SSH (22) to private-sg<br><br>
+                        <strong>Use Case:</strong> Secure gateway to access private instances
+                    </div>
+                </div>
+                
+                <div class="use-case">
+                    <div class="use-case-title">
+                        <span style="font-size: 24px;">📦</span>
+                        Microservices
+                    </div>
+                    <div class="use-case-content">
+                        <strong>Attached to:</strong> ECS tasks/containers<br><br>
+                        <strong>Inbound Rules:</strong><br>
+                        • Custom port from other-service-sg<br>
+                        • Custom port from api-gateway-sg<br><br>
+                        <strong>Use Case:</strong> Services that communicate with each other using security groups for isolation
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Best Practices -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">✨</span>
+                Best Practices & Key Points
+            </div>
+            
+                            <div class="warning-box">
+                <div class="warning-title">⚠️ Important Security Considerations</div>
+                <div class="warning-content">
+                    <strong>DON'T do these:</strong><br>
+                    ❌ Allow 0.0.0.0/0 on SSH (port 22) - hackers will find you in minutes!<br>
+                    ❌ Allow 0.0.0.0/0 on database ports (3306, 5432, etc.)<br>
+                    ❌ Use the same security group for everything<br>
+                    ❌ Leave default outbound rules too open for sensitive systems<br>
+                    ❌ Forget to document what each rule does<br><br>
+                    
+                    <strong>DO these instead:</strong><br>
+                    ✅ Use specific IP ranges or security groups as sources<br>
+                    ✅ Create separate security groups for different layers (web, app, database)<br>
+                    ✅ Use descriptive names and descriptions<br>
+                    ✅ Regularly audit and remove unused rules<br>
+                    ✅ Use the principle of least privilege
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-title">💡 Pro Tips</div>
+                <div class="info-content">
+                    1️⃣ <strong>Reference Security Groups by ID:</strong> Instead of IP addresses, reference other security groups. This way, if you add more servers to that group, they automatically get access!<br><br>
+                    
+                    2️⃣ <strong>Layer Your Security:</strong> Use both Security Groups (instance-level) and Network ACLs (subnet-level) for defense in depth<br><br>
+                    
+                    3️⃣ <strong>One Security Group, Many Resources:</strong> You can attach the same security group to 100 EC2 instances. Update the rules once, and all instances get the new rules!<br><br>
+                    
+                    4️⃣ <strong>Multiple Security Groups:</strong> Attach up to 5 security groups to a single resource. AWS combines ALL the allow rules from all groups.<br><br>
+                    
+                    5️⃣ <strong>Changes Take Effect Immediately:</strong> No need to restart instances when you modify security group rules!<br><br>
+                    
+                    6️⃣ <strong>Use Tags:</strong> Tag your security groups for better organization and cost allocation
+                </div>
+            </div>
+        </div>
+        
+        <!-- Multiple Security Groups -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🔢</span>
+                Multiple Security Groups on One Resource
+            </div>
+            
+            <div class="diagram">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="display: inline-block; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 3px solid #3498db;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🖥️</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #2c3e50;">EC2 Instance</div>
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px; border-radius: 8px;">
+                                    <div style="font-weight: bold; margin-bottom: 8px;">🛡️ SG 1: web-sg</div>
+                                    <div style="font-size: 12px;">
+                                        HTTP: 80<br>
+                                        HTTPS: 443
+                                    </div>
+                                </div>
+                                <div style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; padding: 15px; border-radius: 8px;">
+                                    <div style="font-weight: bold; margin-bottom: 8px;">🛡️ SG 2: ssh-sg</div>
+                                    <div style="font-size: 12px;">
+                                        SSH: 22<br>
+                                        from office IP
+                                    </div>
+                                </div>
+                                <div style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; padding: 15px; border-radius: 8px;">
+                                    <div style="font-weight: bold; margin-bottom: 8px;">🛡️ SG 3: monitoring-sg</div>
+                                    <div style="font-size: 12px;">
+                                        Custom: 9090<br>
+                                        for Prometheus
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; background: #e8f5e9; border-radius: 10px; margin-top: 20px;">
+                    <strong style="color: #2e7d32; font-size: 18px;">✅ Result: ALL rules from ALL security groups are COMBINED</strong><br>
+                    <div style="margin-top: 10px; color: #388e3c;">
+                        The EC2 instance accepts traffic on ports: 80, 443, 22 (from office), and 9090
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Common Scenarios -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🎬</span>
+                Real-World Scenarios Explained
+            </div>
+            
+            <div style="display: grid; gap: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px;">
+                    <div style="font-size: 22px; font-weight: bold; margin-bottom: 20px;">
+                        📚 Scenario 1: Three-Tier Application
+                    </div>
+                    <div style="line-height: 1.8;">
+                        <strong>Setup:</strong><br>
+                        • <strong>Web Tier:</strong> Load Balancer + Web Servers<br>
+                        • <strong>App Tier:</strong> Application Servers<br>
+                        • <strong>Database Tier:</strong> RDS Database<br><br>
+                        
+                        <strong>Security Groups:</strong><br>
+                        1️⃣ <strong>alb-sg</strong> → Attached to Load Balancer<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow HTTP/HTTPS from 0.0.0.0/0<br><br>
+                        
+                        2️⃣ <strong>web-sg</strong> → Attached to Web Servers<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow HTTP from alb-sg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow SSH from bastion-sg<br><br>
+                        
+                        3️⃣ <strong>app-sg</strong> → Attached to App Servers<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow port 8080 from web-sg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow SSH from bastion-sg<br><br>
+                        
+                        4️⃣ <strong>db-sg</strong> → Attached to Database<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow MySQL (3306) from app-sg<br><br>
+                        
+                        5️⃣ <strong>bastion-sg</strong> → Attached to Bastion Host<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Allow SSH from office-ip/32
+                    </div>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 15px;">
+                    <div style="font-size: 22px; font-weight: bold; margin-bottom: 20px;">
+                        🔄 Scenario 2: Microservices Communication
+                    </div>
+                    <div style="line-height: 1.8;">
+                        <strong>Setup:</strong><br>
+                        • Multiple microservices need to talk to each other<br>
+                        • Each service runs on different EC2 instances/containers<br><br>
+                        
+                        <strong>Security Groups:</strong><br>
+                        1️⃣ <strong>user-service-sg</strong><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Inbound: Port 8081 from api-gateway-sg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Outbound: Port 3306 to db-sg<br><br>
+                        
+                        2️⃣ <strong>order-service-sg</strong><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Inbound: Port 8082 from api-gateway-sg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Inbound: Port 8082 from payment-service-sg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Outbound: Port 3306 to db-sg<br><br>
+                        
+                        3️⃣ <strong>payment-service-sg</strong><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Inbound: Port 8083 from order-service-sg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Outbound: Port 443 to 0.0.0.0/0 (external payment API)<br><br>
+                        
+                        <strong>Benefit:</strong> Services can only talk to what they need, creating isolation and security!
+                    </div>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 30px; border-radius: 15px;">
+                    <div style="font-size: 22px; font-weight: bold; margin-bottom: 20px;">
+                        🏢 Scenario 3: Development vs Production
+                    </div>
+                    <div style="line-height: 1.8;">
+                        <strong>Best Practice:</strong> Use different security groups for different environments<br><br>
+                        
+                        <strong>Development Environment:</strong><br>
+                        • <strong>dev-web-sg:</strong> More permissive, easier access for developers<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• SSH from entire developer network<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• More open ports for debugging<br><br>
+                        
+                        <strong>Production Environment:</strong><br>
+                        • <strong>prod-web-sg:</strong> Highly restricted<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• SSH only from bastion host<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• Only necessary ports open<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;• All changes require approval<br><br>
+                        
+                        <strong>Why?</strong> Prevents accidental production access and follows principle of least privilege
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Troubleshooting -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">🔧</span>
+                Troubleshooting Common Issues
+            </div>
+            
+            <div style="display: grid; gap: 20px;">
+                <div style="background: #ffebee; border-left: 5px solid #f44336; padding: 20px; border-radius: 10px;">
+                    <div style="font-weight: bold; color: #c62828; margin-bottom: 10px; font-size: 18px;">
+                        ❌ Problem: Can't connect to EC2 instance via SSH
+                    </div>
+                    <div style="color: #d32f2f; line-height: 1.8;">
+                        <strong>Check these:</strong><br>
+                        1️⃣ Is port 22 allowed in inbound rules?<br>
+                        2️⃣ Is your IP address in the allowed source? (Check "What's my IP")<br>
+                        3️⃣ Is the EC2 instance in a public subnet with an Elastic IP?<br>
+                        4️⃣ Does the Network ACL also allow SSH?<br>
+                        5️⃣ Is the key pair correct?
+                    </div>
+                </div>
+                
+                <div style="background: #ffebee; border-left: 5px solid #f44336; padding: 20px; border-radius: 10px;">
+                    <div style="font-weight: bold; color: #c62828; margin-bottom: 10px; font-size: 18px;">
+                        ❌ Problem: Database connection timeout from application
+                    </div>
+                    <div style="color: #d32f2f; line-height: 1.8;">
+                        <strong>Check these:</strong><br>
+                        1️⃣ Is the database port (3306, 5432, etc.) allowed in db-sg?<br>
+                        2️⃣ Is the source set to the application's security group?<br>
+                        3️⃣ Are both resources in the same VPC?<br>
+                        4️⃣ Does the database subnet have proper routing?<br>
+                        5️⃣ Check the connection string (hostname, username, password)
+                    </div>
+                </div>
+                
+                <div style="background: #ffebee; border-left: 5px solid #f44336; padding: 20px; border-radius: 10px;">
+                    <div style="font-weight: bold; color: #c62828; margin-bottom: 10px; font-size: 18px;">
+                        ❌ Problem: Website not loading from internet
+                    </div>
+                    <div style="color: #d32f2f; line-height: 1.8;">
+                        <strong>Check these:</strong><br>
+                        1️⃣ Is HTTP (80) and/or HTTPS (443) allowed from 0.0.0.0/0?<br>
+                        2️⃣ Is the EC2 in a public subnet?<br>
+                        3️⃣ Does the EC2 have a public IP or Elastic IP?<br>
+                        4️⃣ Is the web server actually running? (nginx, apache)<br>
+                        5️⃣ Check Route 53 DNS settings if using domain name
+                    </div>
+                </div>
+                
+                <div style="background: #e8f5e9; border-left: 5px solid #4caf50; padding: 20px; border-radius: 10px;">
+                    <div style="font-weight: bold; color: #2e7d32; margin-bottom: 10px; font-size: 18px;">
+                        💡 Quick Debug Tip
+                    </div>
+                    <div style="color: #388e3c; line-height: 1.8;">
+                        Use <strong>VPC Flow Logs</strong> to see exactly what traffic is being accepted or rejected by security groups!<br><br>
+                        
+                        Enable Flow Logs → Check CloudWatch Logs → See ACCEPT/REJECT decisions<br><br>
+                        
+                        This shows you exactly which security group rule (or lack thereof) is blocking your traffic.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Reference -->
+        <div class="section">
+            <div class="section-title">
+                <span style="font-size: 36px;">📖</span>
+                Quick Reference Cheat Sheet
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; border: 2px solid #2196f3;">
+                    <div style="font-weight: bold; color: #1565c0; margin-bottom: 15px; font-size: 18px;">
+                        🔑 Key Facts
+                    </div>
+                    <div style="color: #1976d2; line-height: 2;">
+                        • Acts at <strong>instance level</strong><br>
+                        • <strong>Stateful</strong> firewall<br>
+                        • Only <strong>ALLOW</strong> rules<br>
+                        • Default: Deny all inbound<br>
+                        • Default: Allow all outbound<br>
+                        • Changes apply <strong>immediately</strong><br>
+                        • Up to 5 per resource<br>
+                        • Up to 60 inbound + 60 outbound rules
+                    </div>
+                </div>
+                
+                <div style="background: #f3e5f5; padding: 20px; border-radius: 10px; border: 2px solid #9c27b0;">
+                    <div style="font-weight: bold; color: #6a1b9a; margin-bottom: 15px; font-size: 18px;">
+                        📝 Common Ports
+                    </div>
+                    <div style="color: #7b1fa2; line-height: 2;">
+                        • SSH: <strong>22</strong><br>
+                        • HTTP: <strong>80</strong><br>
+                        • HTTPS: <strong>443</strong><br>
+                        • MySQL/Aurora: <strong>3306</strong><br>
+                        • PostgreSQL: <strong>5432</strong><br>
+                        • MongoDB: <strong>27017</strong><br>
+                        • RDP: <strong>3389</strong><br>
+                        • Custom: Any port you define
+                    </div>
+                </div>
+                
+                <div style="background: #fff3e0; padding: 20px; border-radius: 10px; border: 2px solid #ff9800;">
+                    <div style="font-weight: bold; color: #e65100; margin-bottom: 15px; font-size: 18px;">
+                        ✅ Best Practices
+                    </div>
+                    <div style="color: #ef6c00; line-height: 2;">
+                        • Use descriptive names<br>
+                        • Reference SGs, not IPs<br>
+                        • Separate by tier/function<br>
+                        • Regular audits<br>
+                        • Document everything<br>
+                        • Least privilege principle<br>
+                        • Never 0.0.0.0/0 for SSH<br>
+                        • Use tags for organization
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Final Summary -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 15px; margin-top: 40px;">
+            <div style="font-size: 28px; font-weight: bold; margin-bottom: 20px; text-align: center;">
+                🎯 Summary: Security Groups in a Nutshell
+            </div>
+            <div style="font-size: 16px; line-height: 2; max-width: 900px; margin: 0 auto;">
+                <strong>What:</strong> Virtual firewalls that control traffic to/from AWS resources<br><br>
+                
+                <strong>Where:</strong> Attached to EC2, RDS, Load Balancers, Lambda (in VPC), and more<br><br>
+                
+                <strong>How:</strong> Define inbound and outbound rules specifying protocols, ports, and sources<br><br>
+                
+                <strong>Key Feature:</strong> Stateful - remembers connections, so responses are automatically allowed<br><br>
+                
+                <strong>Philosophy:</strong> Deny by default, explicitly allow what's needed<br><br>
+                
+                <strong>Best Use:</strong> Layer different security groups by application tier for defense in depth<br><br>
+                
+                <strong>Remember:</strong> Security Groups + Network ACLs + IAM = Comprehensive AWS Security! 🛡️
+            </div>
+        </div>
+    </div>
+</body>
+</html>
